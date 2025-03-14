@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinese-English Side-by-Side Translation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .column {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            height: 100%;
+        }
+        
+        .chinese {
+            background-color: #f9f9f9;
+        }
+        
+        .english {
+            background-color: #f1f1f1;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background-color: inherit;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        /* Input panel styles */
+        .input-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .input-panel.active {
+            transform: translateY(0);
+        }
+        
+        .input-container {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .text-input {
+            flex: 1;
+            height: 150px;
+            padding: 10px;
+            margin: 0 5px;
+            font-family: inherit;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        #toggleInput {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 101;
+        }
+        
+        /* Custom scrollbar */
+        .column::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .column::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .column::-webkit-scrollbar-thumb {
+            background: #888;
+        }
+        
+        .column::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="chinese" class="column chinese">
+            <h1>中文文档</h1>
+            <div id="chineseContent">
+                <!-- Chinese content will be populated here -->
+                <p>点击右下角的 "+" 按钮来添加您的文本内容。</p>
+            </div>
+        </div>
+        <div id="english" class="column english">
+            <h1>English Document</h1>
+            <div id="englishContent">
+                <!-- English content will be populated here -->
+                <p>Click the "+" button in the bottom right corner to add your text content.</p>
+            </div>
+        </div>
+    </div>
+    
+    <button id="toggleInput">+</button>
+    
+    <div class="input-panel" id="inputPanel">
+        <div class="input-container">
+            <textarea id="chineseInput" class="text-input" placeholder="粘贴中文文本内容在这里..."></textarea>
+            <textarea id="englishInput" class="text-input" placeholder="Paste English text content here..."></textarea>
+        </div>
+        <div class="button-container">
+            <button id="applyBtn">应用内容</button>
+            <button id="clearBtn">清除内容</button>
+            <button id="closePanel">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        // Get the two columns
+        const chineseColumn = document.getElementById('chinese');
+        const englishColumn = document.getElementById('english');
+        const chineseContent = document.getElementById('chineseContent');
+        const englishContent = document.getElementById('englishContent');
+        const chineseInput = document.getElementById('chineseInput');
+        const englishInput = document.getElementById('englishInput');
+        const toggleInput = document.getElementById('toggleInput');
+        const inputPanel = document.getElementById('inputPanel');
+        const applyBtn = document.getElementById('applyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const closePanel = document.getElementById('closePanel');
+        
+        // Synchronize scrolling
+        chineseColumn.addEventListener('scroll', function() {
+            englishColumn.scrollTop = chineseColumn.scrollTop;
+        });
+        
+        englishColumn.addEventListener('scroll', function() {
+            chineseColumn.scrollTop = englishColumn.scrollTop;
+        });
+        
+        // Toggle input panel
+        toggleInput.addEventListener('click', function() {
+            inputPanel.classList.toggle('active');
+            toggleInput.textContent = inputPanel.classList.contains('active') ? '−' : '+';
+        });
+        
+        closePanel.addEventListener('click', function() {
+            inputPanel.classList.remove('active');
+            toggleInput.textContent = '+';
+        });
+        
+        // Apply content
+        applyBtn.addEventListener('click', function() {
+            if (chineseInput.value.trim() === '' && englishInput.value.trim() === '') {
+                alert('请至少在一个文本框中输入内容！');
+                return;
+            }
+            
+            // Process and apply Chinese content
+            processContent(chineseInput.value, chineseContent);
+            
+            // Process and apply English content
+            processContent(englishInput.value, englishContent);
+            
+            // Close the panel
+            inputPanel.classList.remove('active');
+            toggleInput.textContent = '+';
+        });
+        
+        // Clear content
+        clearBtn.addEventListener('click', function() {
+            if (confirm('确定要清除所有内容吗？')) {
+                chineseContent.innerHTML = '';
+                englishContent.innerHTML = '';
+                chineseInput.value = '';
+                englishInput.value = '';
+            }
+        });
+        
+        // Process text content into paragraphs
+        function processContent(text, targetElement) {
+            // Clear existing content
+            targetElement.innerHTML = '';
+            
+            if (text.trim() === '') return;
+            
+            // Split by line breaks and create paragraph for each non-empty line
+            const lines = text.split(/\r?\n/);
+            
+            lines.forEach(line => {
+                if (line.trim() !== '') {
+                    const p = document.createElement('p');
+                    p.textContent = line;
+                    targetElement.appendChild(p);
+                }
+            });
+        }
+        
+        // Function to load text from file
+        function loadFromFile(fileInput, textArea) {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    textArea.value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        }
+        
+        // Add file loading functionality
+        document.addEventListener('paste', function(e) {
+            // Check if the paste target is one of our textareas
+            const target = e.target;
+            if (target === chineseInput || target === englishInput) {
+                // Let the default paste happen
+                return;
+            }
+        });
+
+        // Optional: Save/Load from localStorage
+        window.addEventListener('beforeunload', function() {
+            localStorage.setItem('chineseContent', chineseContent.innerHTML);
+            localStorage.setItem('englishContent', englishContent.innerHTML);
+        });
+
+        // Load saved content if exists
+        window.addEventListener('load', function() {
+            const savedChinese = localStorage.getItem('chineseContent');
+            const savedEnglish = localStorage.getItem('englishContent');
+            
+            if (savedChinese) chineseContent.innerHTML = savedChinese;
+            if (savedEnglish) englishContent.innerHTML = savedEnglish;
+        });
+    </script>
+</body>
+</html>

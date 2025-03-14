@@ -29,6 +29,7 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            overflow-x: auto;
             border: 1px solid #ddd;
             height: 100%;
         }
@@ -53,7 +54,7 @@
         
         p {
             margin-bottom: 15px;
-            white-space: pre-wrap;
+            white-space: nowrap;
         }
         
         /* Input panel styles */
@@ -189,12 +190,14 @@
         const clearBtn = document.getElementById('clearBtn');
         const closePanel = document.getElementById('closePanel');
         
-        // Synchronize scrolling
+        // Synchronize vertical scrolling only
         chineseColumn.addEventListener('scroll', function() {
+            // Only sync the vertical scroll
             englishColumn.scrollTop = chineseColumn.scrollTop;
         });
         
         englishColumn.addEventListener('scroll', function() {
+            // Only sync the vertical scroll
             chineseColumn.scrollTop = englishColumn.scrollTop;
         });
         

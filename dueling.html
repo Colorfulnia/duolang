@@ -53,6 +53,7 @@
         
         p {
             margin-bottom: 15px;
+            white-space: pre-wrap;
         }
         
         /* Input panel styles */
@@ -243,15 +244,15 @@
             
             if (text.trim() === '') return;
             
-            // Split by line breaks and create paragraph for each non-empty line
+            // Split by line breaks and create paragraph for each line
             const lines = text.split(/\r?\n/);
             
             lines.forEach(line => {
-                if (line.trim() !== '') {
-                    const p = document.createElement('p');
-                    p.textContent = line;
-                    targetElement.appendChild(p);
-                }
+                // Create paragraph even for empty lines to maintain alignment
+                const p = document.createElement('p');
+                // Preserve the original text with spaces and indentation
+                p.textContent = line;
+                targetElement.appendChild(p);
             });
         }
         

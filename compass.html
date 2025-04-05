@@ -75,7 +75,8 @@
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
+        // Disable shadows globally to prevent compass from casting shadows
+        renderer.shadowMap.enabled = false;
         document.body.appendChild(renderer.domElement);
         
         // OrbitControls for camera movement
@@ -92,11 +93,6 @@
         
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(5, 10, 7);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.camera.top = 10;
-        directionalLight.shadow.camera.bottom = -10;
-        directionalLight.shadow.camera.left = -10;
-        directionalLight.shadow.camera.right = 10;
         scene.add(directionalLight);
         
         // Create drawing plane
@@ -107,7 +103,6 @@
         });
         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
         plane.rotation.x = -Math.PI / 2;
-        plane.receiveShadow = true; // Keep plane receiving shadows
         scene.add(plane);
         
         // Add grid helper for reference
@@ -118,65 +113,47 @@
         const compassGroup = new THREE.Group();
         scene.add(compassGroup);
         
-        // Compass pivot at the top
-        const pivotGeometry = new THREE.SphereGeometry(0.15, 16, 16);
-        const pivotMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
-        const pivot = new THREE.Mesh(pivotGeometry, pivotMaterial);
-        pivot.position.y = 3;
-        pivot.castShadow = false; // Remove shadow as requested
-        compassGroup.add(pivot);
+        // Compass center point (needle point)
+        const centerPointGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const centerPointMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+        const centerPoint = new THREE.Mesh(centerPointGeometry, centerPointMaterial);
+        centerPoint.position.y = 0.15;
+        compassGroup.add(centerPoint);
         
-        // Create two leg groups that will rotate from the pivot
-        const needleLegGroup = new THREE.Group();
-        const pencilLegGroup = new THREE.Group();
-        
-        // Position the leg groups at the pivot
-        needleLegGroup.position.y = 3;
-        pencilLegGroup.position.y = 3;
-        
-        compassGroup.add(needleLegGroup);
-        compassGroup.add(pencilLegGroup);
-        
-        // Needle leg
-        const needleLegGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+        // Compass legs
         const legMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
-        const needleLeg = new THREE.Mesh(needleLegGeometry, legMaterial);
-        needleLeg.position.y = -1.5;
-        needleLeg.castShadow = false; // Remove shadow as requested
-        needleLegGroup.add(needleLeg);
         
-        // Needle point
-        const needlePointGeometry = new THREE.ConeGeometry(0.08, 0.2, 16);
-        const needlePointMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
-        const needlePoint = new THREE.Mesh(needlePointGeometry, needlePointMaterial);
-        needlePoint.position.y = -3;
-        needlePoint.rotation.x = Math.PI; // Point down
-        needlePoint.castShadow = false; // Remove shadow as requested
-        needleLegGroup.add(needlePoint);
+        // Fixed leg (center leg)
+        const fixedLegGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+        const fixedLeg = new THREE.Mesh(fixedLegGeometry, legMaterial);
+        fixedLeg.position.set(0, 1.5, 0);
+        compassGroup.add(fixedLeg);
         
-        // Pencil leg
-        const pencilLegGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
-        const pencilLeg = new THREE.Mesh(pencilLegGeometry, legMaterial);
-        pencilLeg.position.y = -1.5;
-        pencilLeg.castShadow = false; // Remove shadow as requested
-        pencilLegGroup.add(pencilLeg);
+        // Connector at the top (pivot point)
+        const connectorGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const connectorMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+        const connector = new THREE.Mesh(connectorGeometry, connectorMaterial);
+        connector.position.y = 3;
+        compassGroup.add(connector);
         
-        // Improved pencil tip
-        const pencilBodyGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
-        const pencilBodyMaterial = new THREE.MeshLambertMaterial({ color: 0xffcc99 }); // Wood color
-        const pencilBody = new THREE.Mesh(pencilBodyGeometry, pencilBodyMaterial);
-        pencilBody.position.y = -2.85;
-        pencilBody.castShadow = false;
-        pencilLegGroup.add(pencilBody);
+        // Movable leg (pencil leg)
+        const movableLegGroup = new THREE.Group();
+        compassGroup.add(movableLegGroup);
         
-        // Pencil lead
-        const pencilLeadGeometry = new THREE.ConeGeometry(0.08, 0.3, 16);
-        const pencilLeadMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
-        const pencilLead = new THREE.Mesh(pencilLeadGeometry, pencilLeadMaterial);
-        pencilLead.position.y = -3.15;
-        pencilLead.rotation.x = Math.PI; // Point down
-        pencilLead.castShadow = false;
-        pencilLegGroup.add(pencilLead);
+        const movableLegGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+        const movableLeg = new THREE.Mesh(movableLegGeometry, legMaterial);
+        movableLeg.position.y = -1.5;
+        movableLegGroup.add(movableLeg);
+        
+        // Pencil tip
+        const pencilTipGeometry = new THREE.ConeGeometry(0.1, 0.3, 16);
+        const pencilTipMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const pencilTip = new THREE.Mesh(pencilTipGeometry, pencilTipMaterial);
+        pencilTip.position.y = -3;
+        movableLegGroup.add(pencilTip);
+        
+        // Position the movable leg group at the pivot point
+        movableLegGroup.position.y = 3;
         
         // Variables for compass state
         let compassAngle = 30; // degrees
@@ -187,26 +164,46 @@
         let currentCircle = null;
         let drawStartTime = 0;
         let drawStartAngle = 0;
+        let lastDrawnAngle = 0;
         let circles = [];
         
         // Update compass appearance based on angle
         function updateCompass() {
             // Convert angle to radians
-            const radians = THREE.MathUtils.degToRad(compassAngle / 2); // Half the angle for each leg
+            const radians = THREE.MathUtils.degToRad(compassAngle);
             
-            // Calculate compass radius
-            compassRadius = 2 * Math.sin(THREE.MathUtils.degToRad(compassAngle) / 2) * 3;
+            // Calculate movable leg position
+            compassRadius = 3 * Math.sin(radians); // Calculate radius based on angle
             
-            // Update the legs rotation - both legs tilt inward to meet at their tips
-            needleLegGroup.rotation.z = radians;
-            pencilLegGroup.rotation.z = -radians;
-            
-            // Position pencil leg horizontally
-            pencilLegGroup.position.x = compassRadius;
+            // Update the rotation of the movable leg
+            movableLegGroup.rotation.z = -radians;
             
             // Update UI display
             document.getElementById('angle').textContent = compassAngle.toFixed(1);
             document.getElementById('radius').textContent = compassRadius.toFixed(2);
+        }
+        
+        // Calculate the position of the pencil tip
+        function getPencilTipPosition() {
+            // Create a vector for the pencil tip in local coordinates
+            const localPosition = new THREE.Vector3(0, -3, 0);
+            
+            // Apply the movable leg's rotation
+            localPosition.applyAxisAngle(new THREE.Vector3(0, 0, 1), -THREE.MathUtils.degToRad(compassAngle));
+            
+            // Translate to the connector position
+            localPosition.add(new THREE.Vector3(0, 3, 0));
+            
+            // Apply the compass group's rotation
+            localPosition.applyAxisAngle(new THREE.Vector3(0, 1, 0), compassGroup.rotation.y);
+            
+            // Translate to the compass group's position
+            localPosition.add(compassGroup.position);
+            
+            // Set y to just above the plane
+            localPosition.y = 0.01;
+            
+            return localPosition;
         }
         
         // Create a complete circle at the current compass position
@@ -249,24 +246,26 @@
             return circle;
         }
         
-        // Update the dynamic circle as we draw - ensuring it appears under the pencil tip
+        // Update the dynamic circle as we draw
         function updateDynamicCircle(startAngle, currentAngle) {
             if (!currentCircle) return;
             
-            // Handle wrapping around the circle
-            if (currentAngle < startAngle) {
-                currentAngle += Math.PI * 2;
+            // Calculate the angular distance considering wrapping
+            let angularDistance = currentAngle - startAngle;
+            if (angularDistance < 0) {
+                angularDistance += Math.PI * 2;
             }
             
-            // Calculate how much of the circle to draw
-            const angularDistance = currentAngle - startAngle;
             const circleSegments = 128;
-            const numSegmentsToShow = Math.max(2, Math.ceil((angularDistance / (Math.PI * 2)) * circleSegments));
+            const numSegmentsToShow = Math.max(2, Math.ceil((angularDistance / (Math.PI * 2)) * circleSegments) + 1);
             
             const points = [];
             for (let i = 0; i <= numSegmentsToShow; i++) {
+                // Calculate angle based on the start angle and how far we've rotated
                 const theta = startAngle + (i / circleSegments) * Math.PI * 2;
-                if (theta > currentAngle && i > 0) break;
+                
+                // Break if we've gone past the current angle
+                if (i > 0 && (startAngle + angularDistance < theta)) break;
                 
                 const x = compassGroup.position.x + compassRadius * Math.cos(theta);
                 const z = compassGroup.position.z + compassRadius * Math.sin(theta);
@@ -290,6 +289,9 @@
                 currentCircle.geometry.setFromPoints(points);
                 currentCircle.geometry.attributes.position.needsUpdate = true;
             }
+            
+            // Store the last drawn angle
+            lastDrawnAngle = currentAngle;
         }
         
         // Reset the scene and compass
@@ -305,6 +307,7 @@
             
             // Reset compass position
             compassGroup.position.set(0, 0, 0);
+            compassGroup.rotation.y = 0;
             
             // Reset compass angle
             compassAngle = 30;
@@ -320,20 +323,19 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
-        // Adjust compass angle with mouse wheel without affecting camera zoom
+        // Adjust compass angle with mouse wheel - prevent camera zoom
         window.addEventListener('wheel', function(event) {
-            if (orbitControls.enabled) {
-                // Normal orbit controls behavior
-                return;
-            }
-            
-            // Only prevent default if actively adjusting compass
+            // Prevent scrolling the page and disable orbitControls zoom
             event.preventDefault();
+            event.stopPropagation();
             
-            // Adjust compass angle (1 degree per wheel delta)
-            compassAngle = Math.max(5, Math.min(120, compassAngle - event.deltaY * 0.1));
+            // Adjust compass angle (0.1 degree per wheel delta)
+            compassAngle = Math.max(5, Math.min(90, compassAngle - event.deltaY * 0.1));
             updateCompass();
-        }, { passive: false });
+            
+            // Prevent OrbitControls from handling this event
+            return false;
+        }, { passive: false, capture: true });
         
         // Mouse down handler
         window.addEventListener('mousedown', function(event) {
@@ -382,6 +384,7 @@
                     
                     // Rotate compass to starting position
                     compassGroup.rotation.y = drawStartAngle;
+                    lastDrawnAngle = drawStartAngle;
                 }
                 
                 drawStartTime = Date.now();
@@ -421,10 +424,10 @@
                     const dz = point.z - compassGroup.position.z;
                     const currentAngle = Math.atan2(dz, dx);
                     
-                    // Rotate compass to point toward mouse
+                    // Rotate compass pencil arm to follow mouse
                     compassGroup.rotation.y = currentAngle;
                     
-                    // Update circle drawing - matching pencil tip position
+                    // Update circle drawing - make sure circle appears under the pencil tip
                     updateDynamicCircle(drawStartAngle, currentAngle);
                 }
             }
@@ -472,19 +475,6 @@
             event.preventDefault();
         });
         
-        // Handle keyboard events for toggling wheel behavior
-        window.addEventListener('keydown', function(event) {
-            if (event.key === 'Shift') {
-                orbitControls.enabled = false; // Disable orbit controls when holding Shift
-            }
-        });
-        
-        window.addEventListener('keyup', function(event) {
-            if (event.key === 'Shift') {
-                orbitControls.enabled = true; // Re-enable orbit controls when releasing Shift
-            }
-        });
-        
         // Toggle mode button
         document.getElementById('toggle-mode').addEventListener('click', function() {
             drawingMode = !drawingMode;
@@ -500,6 +490,16 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+        
+        // Override the mouse wheel handling in OrbitControls to prevent zoom when adjusting compass
+        const originalHandleMouseWheel = orbitControls.onMouseWheel;
+        orbitControls.onMouseWheel = function(event) {
+            // If we're adjusting the compass, don't zoom
+            if (event._isCompassAdjustment) {
+                return;
+            }
+            originalHandleMouseWheel.call(orbitControls, event);
+        };
         
         // Animation loop
         function animate() {

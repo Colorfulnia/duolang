@@ -52,7 +52,7 @@
             <li>鼠标左键 + 拖动: 移动整个场景视角</li>
             <li>鼠标右键 + 拖动: 移动圆规位置</li>
             <li>鼠标滚轮: 调整圆规张开角度 (圆的半径)</li>
-            <li>"画圆"模式下, 拖动圆规画圆</li>
+            <li>"画圆"模式下, 左键拖动画圆</li>
         </ul>
         <div>圆规角度: <span id="angle">30</span>°</div>
         <div>圆半径: <span id="radius">2.0</span></div>
@@ -119,44 +119,51 @@
         scene.add(compassGroup);
         
         // Compass center point (needle point)
-        const centerPointGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+        const centerPointGeometry = new THREE.SphereGeometry(0.15, 16, 16);
         const centerPointMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
         const centerPoint = new THREE.Mesh(centerPointGeometry, centerPointMaterial);
-        centerPoint.position.y = 0.1;
+        centerPoint.position.y = 0.15;
         centerPoint.castShadow = true;
         compassGroup.add(centerPoint);
         
         // Compass legs
         const legMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
         
-        // Fixed leg
+        // Fixed leg (center leg)
         const fixedLegGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
         const fixedLeg = new THREE.Mesh(fixedLegGeometry, legMaterial);
         fixedLeg.position.set(0, 1.5, 0);
         fixedLeg.castShadow = true;
         compassGroup.add(fixedLeg);
         
-        // Movable leg (with pencil)
+        // Connector at the top (pivot point)
+        const connectorGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const connectorMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+        const connector = new THREE.Mesh(connectorGeometry, connectorMaterial);
+        connector.position.y = 3;
+        connector.castShadow = true;
+        compassGroup.add(connector);
+        
+        // Movable leg (pencil leg)
+        const movableLegGroup = new THREE.Group();
+        compassGroup.add(movableLegGroup);
+        
         const movableLegGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
         const movableLeg = new THREE.Mesh(movableLegGeometry, legMaterial);
+        movableLeg.position.y = -1.5;
         movableLeg.castShadow = true;
-        compassGroup.add(movableLeg);
+        movableLegGroup.add(movableLeg);
         
         // Pencil tip
         const pencilTipGeometry = new THREE.ConeGeometry(0.1, 0.3, 16);
         const pencilTipMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
         const pencilTip = new THREE.Mesh(pencilTipGeometry, pencilTipMaterial);
+        pencilTip.position.y = -3;
         pencilTip.castShadow = true;
-        compassGroup.add(pencilTip);
+        movableLegGroup.add(pencilTip);
         
-        // Connecting bar at the top
-        const barGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
-        barGeometry.rotateZ(Math.PI / 2);
-        const barMaterial = new THREE.MeshLambertMaterial({ color: 0x777777 });
-        const bar = new THREE.Mesh(barGeometry, barMaterial);
-        bar.position.y = 3;
-        bar.castShadow = true;
-        compassGroup.add(bar);
+        // Position the movable leg group at the pivot point
+        movableLegGroup.position.y = 3;
         
         // Variables for compass state
         let compassAngle = 30; // degrees
@@ -166,7 +173,8 @@
         let drawingCircle = null;
         let drawingMode = false;
         let currentCircle = null;
-        let circlePoints = [];
+        let drawStartTime = 0;
+        let drawStartAngle = 0;
         let circles = [];
         
         // Update compass appearance based on angle
@@ -176,25 +184,16 @@
             
             // Calculate movable leg position
             compassRadius = 3 * Math.sin(radians); // Calculate radius based on angle
-            const legHeight = 3;
             
-            // Update the position of the movable leg
-            movableLeg.position.set(compassRadius, 1.5, 0);
-            movableLeg.rotation.z = -radians;
-            
-            // Update the position of the pencil tip
-            pencilTip.position.set(compassRadius, 0, 0);
-            pencilTip.rotation.z = Math.PI - radians;
-            
-            // Update the visual bar
-            bar.scale.x = compassRadius / 0.5; // Scale the bar to connect both legs
+            // Update the rotation of the movable leg
+            movableLegGroup.rotation.z = -radians;
             
             // Update UI display
             document.getElementById('angle').textContent = compassAngle.toFixed(1);
             document.getElementById('radius').textContent = compassRadius.toFixed(2);
         }
         
-        // Create a circle at the current compass position
+        // Create a complete circle at the current compass position
         function createCircle() {
             const circleGeometry = new THREE.BufferGeometry();
             const circleSegments = 64;
@@ -221,7 +220,7 @@
             return circle;
         }
         
-        // Create a dynamic circle that updates as we draw
+        // Create a dynamic circle for real-time drawing
         function createDynamicCircle() {
             const circleGeometry = new THREE.BufferGeometry();
             const circleMaterial = new THREE.LineBasicMaterial({ 
@@ -235,22 +234,46 @@
         }
         
         // Update the dynamic circle as we draw
-        function updateDynamicCircle(anglePercent) {
+        function updateDynamicCircle(startAngle, currentAngle) {
             if (!currentCircle) return;
             
-            const circleSegments = 64;
-            const numPoints = Math.max(3, Math.floor(circleSegments * anglePercent));
-            const points = [];
+            // Handle wrapping around the circle
+            if (currentAngle < startAngle) {
+                currentAngle += Math.PI * 2;
+            }
             
-            for (let i = 0; i <= numPoints; i++) {
-                const theta = (i / circleSegments) * Math.PI * 2;
+            // Calculate how much of the circle to draw
+            const angularDistance = currentAngle - startAngle;
+            const circleSegments = 128;
+            const numSegmentsToShow = Math.max(2, Math.ceil((angularDistance / (Math.PI * 2)) * circleSegments));
+            
+            const points = [];
+            for (let i = 0; i <= numSegmentsToShow; i++) {
+                const theta = startAngle + (i / circleSegments) * Math.PI * 2;
+                if (theta > currentAngle && i > 0) break;
+                
                 const x = compassGroup.position.x + compassRadius * Math.cos(theta);
                 const z = compassGroup.position.z + compassRadius * Math.sin(theta);
                 points.push(new THREE.Vector3(x, 0.01, z));
             }
             
-            currentCircle.geometry.setFromPoints(points);
-            currentCircle.geometry.attributes.position.needsUpdate = true;
+            // If we've completed more than 90% of the circle, complete it
+            if (angularDistance >= Math.PI * 1.8) {
+                for (let i = 0; i <= circleSegments; i++) {
+                    const theta = (i / circleSegments) * Math.PI * 2;
+                    const x = compassGroup.position.x + compassRadius * Math.cos(theta);
+                    const z = compassGroup.position.z + compassRadius * Math.sin(theta);
+                    points.push(new THREE.Vector3(x, 0.01, z));
+                }
+                isDrawing = false;
+                circles.push(currentCircle);
+                currentCircle = null;
+            }
+            
+            if (currentCircle) {
+                currentCircle.geometry.setFromPoints(points);
+                currentCircle.geometry.attributes.position.needsUpdate = true;
+            }
         }
         
         // Reset the scene and compass
@@ -269,11 +292,9 @@
             
             // Reset compass angle
             compassAngle = 30;
-            compassRadius = 2.0;
             updateCompass();
             
             isDrawing = false;
-            circlePoints = [];
         }
         
         // Initialize compass
@@ -318,10 +339,31 @@
             if (event.button === 0 && drawingMode) {
                 orbitControls.enabled = false;
                 isDrawing = true;
+                
                 // Create a new dynamic circle
                 if (currentCircle) scene.remove(currentCircle);
                 currentCircle = createDynamicCircle();
-                circlePoints = [];
+                
+                // Calculate starting angle
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(plane);
+                
+                if (intersects.length > 0) {
+                    const point = intersects[0].point;
+                    
+                    // Calculate angle from compass center to start point
+                    const dx = point.x - compassGroup.position.x;
+                    const dz = point.z - compassGroup.position.z;
+                    drawStartAngle = Math.atan2(dz, dx);
+                    
+                    // Rotate compass to starting position
+                    compassGroup.rotation.y = drawStartAngle;
+                }
+                
+                drawStartTime = Date.now();
             }
         });
         
@@ -347,44 +389,22 @@
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
                 
-                // Calculate angle for drawing
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObject(plane);
                 
                 if (intersects.length > 0) {
                     const point = intersects[0].point;
                     
-                    // Calculate angle between compass center and mouse position
+                    // Calculate current angle
                     const dx = point.x - compassGroup.position.x;
                     const dz = point.z - compassGroup.position.z;
-                    const angle = Math.atan2(dz, dx);
+                    const currentAngle = Math.atan2(dz, dx);
                     
                     // Rotate compass pencil arm to follow mouse
-                    compassGroup.rotation.y = angle;
+                    compassGroup.rotation.y = currentAngle;
                     
-                    // Add to circle points (0 to 1 representing progress around the circle)
-                    const normalizedAngle = (angle + Math.PI) / (2 * Math.PI);
-                    circlePoints.push(normalizedAngle);
-                    
-                    // Sort and find the max continuous range
-                    const sortedPoints = [...circlePoints].sort((a, b) => a - b);
-                    let maxRange = sortedPoints[sortedPoints.length - 1] - sortedPoints[0];
-                    
-                    // Check if we've gone past 0/1 boundary
-                    if (maxRange < 0.8 && circlePoints.some(p => p < 0.2) && circlePoints.some(p => p > 0.8)) {
-                        maxRange = 1.0; // Consider it a full circle
-                    }
-                    
-                    // Update drawing progress
-                    updateDynamicCircle(maxRange);
-                    
-                    // If we've drawn nearly a full circle, finalize it
-                    if (maxRange > 0.9) {
-                        circles.push(currentCircle);
-                        currentCircle = null;
-                        isDrawing = false;
-                        circlePoints = [];
-                    }
+                    // Update circle drawing
+                    updateDynamicCircle(drawStartAngle, currentAngle);
                 }
             }
         });
@@ -393,24 +413,34 @@
         window.addEventListener('mouseup', function(event) {
             isDragging = false;
             
-            if (isDrawing && currentCircle) {
-                // If we release while drawing, complete the circle
-                const circleGeometry = new THREE.BufferGeometry();
-                const circleSegments = 64;
-                const points = [];
+            if (isDrawing) {
+                // If we've been drawing for a short time, complete the circle
+                const drawTime = Date.now() - drawStartTime;
                 
-                for (let i = 0; i <= circleSegments; i++) {
-                    const theta = (i / circleSegments) * Math.PI * 2;
-                    const x = compassGroup.position.x + compassRadius * Math.cos(theta);
-                    const z = compassGroup.position.z + compassRadius * Math.sin(theta);
-                    points.push(new THREE.Vector3(x, 0.01, z));
+                if (drawTime < 500 || !currentCircle) {
+                    // Short click - draw complete circle
+                    if (currentCircle) scene.remove(currentCircle);
+                    currentCircle = createCircle();
+                    circles.push(currentCircle);
+                } else {
+                    // If the circle is still being drawn, complete it
+                    const circleGeometry = new THREE.BufferGeometry();
+                    const circleSegments = 64;
+                    const points = [];
+                    
+                    for (let i = 0; i <= circleSegments; i++) {
+                        const theta = (i / circleSegments) * Math.PI * 2;
+                        const x = compassGroup.position.x + compassRadius * Math.cos(theta);
+                        const z = compassGroup.position.z + compassRadius * Math.sin(theta);
+                        points.push(new THREE.Vector3(x, 0.01, z));
+                    }
+                    
+                    currentCircle.geometry.setFromPoints(points);
+                    circles.push(currentCircle);
                 }
                 
-                currentCircle.geometry.setFromPoints(points);
-                circles.push(currentCircle);
                 currentCircle = null;
                 isDrawing = false;
-                circlePoints = [];
             }
             
             orbitControls.enabled = true;

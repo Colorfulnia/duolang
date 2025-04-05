@@ -187,9 +187,9 @@
         // Scene 3: Pattern (third image)
         // [1][1]
         // [3][_]
-        createCubeStack(scenes[2], 0, 0, 1, 0x66ccff); // Top-left (height 1)
         createCubeStack(scenes[2], 1, 0, 1, 0x66ccff); // Top-right (height 1)
-        createCubeStack(scenes[2], 0, 1, 3, 0xff66cc); // Bottom-left (height 3)
+        createCubeStack(scenes[2], 0, 1, 1, 0x66ccff); // Bottom-left (height 1)
+        createCubeStack(scenes[2], 1, 1, 3, 0xff66cc); // Bottom-right (height 3)
 
         // Animation loop
         function animate() {

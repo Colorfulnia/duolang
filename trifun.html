@@ -392,7 +392,6 @@
         ctx.fillText("θ", labelX, labelY);
       }
 
-      // 更新数值显示
       function updateValues() {
         // 计算三角函数值
         const cosValue = Math.cos(angle);
@@ -404,7 +403,7 @@
           tanDisplay = (sinValue / cosValue).toFixed(4);
         }
 
-        // 更新显示文本
+        // 更新显示文本（只更新一次）
         document.getElementById("tan-value").textContent = tanDisplay;
 
         // 计算长度
@@ -412,7 +411,7 @@
         const obLength = radius * cosValue;
         const abLength = radius * sinValue;
 
-        // 更新显示
+        // 更新其他显示
         document.getElementById("oa-value").textContent = oaLength.toFixed(2);
         document.getElementById("ob-value").textContent = obLength.toFixed(2);
         document.getElementById("ab-value").textContent = abLength.toFixed(2);
@@ -422,7 +421,8 @@
         ).toFixed(1)}°`;
         document.getElementById("sin-value").textContent = sinValue.toFixed(4);
         document.getElementById("cos-value").textContent = cosValue.toFixed(4);
-        document.getElementById("tan-value").textContent = tanValue.toFixed(4);
+        // Remove the following erroneous line:
+        // document.getElementById("tan-value").textContent = tanValue.toFixed(4);
       }
 
       // 绘制函数图像

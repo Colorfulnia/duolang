@@ -375,7 +375,7 @@
         const arcRadius = 30;
         ctx.beginPath();
         // 从X轴正方向逆时针绘制到当前角度
-        ctx.arc(centerX, 0 - centerY, arcRadius, 0, angle, false);
+        ctx.arc(centerX, centerY, arcRadius, 0, angle, true);
         ctx.strokeStyle = "rgba(128, 0, 128, 0.6)";
         ctx.lineWidth = 2;
         ctx.stroke();

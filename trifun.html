@@ -169,7 +169,6 @@
       const height = canvas.height;
       const centerX = width / 2;
       const centerY = height / 2;
-      const centerY2 = - centerY;
       const scale = 100; // 坐标系的缩放比例
 
       // 角度和三角函数值
@@ -376,7 +375,7 @@
         const arcRadius = 30;
         ctx.beginPath();
         // 从X轴正方向逆时针绘制到当前角度
-        ctx.arc(centerX, centerY2, arcRadius, 0, angle, false);
+        ctx.arc(centerX, 0 - centerY, arcRadius, 0, angle, false);
         ctx.strokeStyle = "rgba(128, 0, 128, 0.6)";
         ctx.lineWidth = 2;
         ctx.stroke();

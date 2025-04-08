@@ -1,677 +1,738 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>三角函数动态演示</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        #main-container {
-            flex: 1;
-            min-width: 600px;
-        }
-        #info-panel {
-            width: 250px;
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-        }
-        #graph-container {
-            width: 100%;
-            margin-top: 20px;
-        }
-        #graph-canvas {
-            width: 100%;
-            height: 200px;
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-        }
-        canvas {
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            padding: 5px 10px;
-            text-align: left;
-        }
-        th {
-            font-weight: bold;
-        }
-        .instruction {
-            margin: 10px 0;
-            color: #555;
-        }
-        h1 {
-            text-align: center;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      #main-container {
+        flex: 1;
+        min-width: 600px;
+      }
+      #info-panel {
+        width: 250px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+      }
+      #graph-container {
+        width: 100%;
+        margin-top: 20px;
+      }
+      #graph-canvas {
+        width: 100%;
+        height: 200px;
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+      }
+      canvas {
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        padding: 5px 10px;
+        text-align: left;
+      }
+      th {
+        font-weight: bold;
+      }
+      .instruction {
+        margin: 10px 0;
+        color: #555;
+      }
+      h1 {
+        text-align: center;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>三角函数动态演示</h1>
     <p class="instruction">点击并拖动红色射线来改变角度</p>
-    
+
     <div class="container">
-        <div id="main-container">
-            <canvas id="trig-canvas" width="600" height="600"></canvas>
-        </div>
-        
-        <div id="info-panel">
-            <table>
-                <tr>
-                    <th style="color:red">OA (半径):</th>
-                    <td id="oa-value" style="color:red">1</td>
-                </tr>
-                <tr>
-                    <th style="color:gold">OB:</th>
-                    <td id="ob-value" style="color:gold">1</td>
-                </tr>
-                <tr>
-                    <th style="color:blue">AB:</th>
-                    <td id="ab-value" style="color:blue">0</td>
-                </tr>
-                <tr>
-                    <th>角度:</th>
-                    <td id="angle-value">0°</td>
-                </tr>
-                <tr>
-                    <th>sin = <div style="display:inline-block;text-align:center">
-                        <span style="color:blue">AB</span><br>
-                        <span style="border-top:1px solid black;display:block"></span>
-                        <span style="color:red">OA</span>
-                    </div>:</th>
-                    <td id="sin-value">0</td>
-                </tr>
-                <tr>
-                    <th>cos = <div style="display:inline-block;text-align:center">
-                        <span style="color:gold">OB</span><br>
-                        <span style="border-top:1px solid black;display:block"></span>
-                        <span style="color:red">OA</span>
-                    </div>:</th>
-                    <td id="cos-value">1</td>
-                </tr>
-                <tr>
-                    <th>tan = <div style="display:inline-block;text-align:center">
-                        <span style="color:blue">AB</span><br>
-                        <span style="border-top:1px solid black;display:block"></span>
-                        <span style="color:gold">OB</span>
-                    </div>:</th>
-                    <td id="tan-value">0</td>
-                </tr>
-            </table>
-        </div>
+      <div id="main-container">
+        <canvas id="trig-canvas" width="600" height="600"></canvas>
+      </div>
+
+      <div id="info-panel">
+        <table>
+          <tr>
+            <th style="color: red">OA (半径):</th>
+            <td id="oa-value" style="color: red">1</td>
+          </tr>
+          <tr>
+            <th style="color: gold">OB:</th>
+            <td id="ob-value" style="color: gold">1</td>
+          </tr>
+          <tr>
+            <th style="color: blue">AB:</th>
+            <td id="ab-value" style="color: blue">0</td>
+          </tr>
+          <tr>
+            <th>角度:</th>
+            <td id="angle-value">0°</td>
+          </tr>
+          <tr>
+            <th>
+              sin =
+              <div style="display: inline-block; text-align: center">
+                <span style="color: blue">AB</span><br />
+                <span
+                  style="border-top: 1px solid black; display: block"
+                ></span>
+                <span style="color: red">OA</span>
+              </div>
+              :
+            </th>
+            <td id="sin-value">0</td>
+          </tr>
+          <tr>
+            <th>
+              cos =
+              <div style="display: inline-block; text-align: center">
+                <span style="color: gold">OB</span><br />
+                <span
+                  style="border-top: 1px solid black; display: block"
+                ></span>
+                <span style="color: red">OA</span>
+              </div>
+              :
+            </th>
+            <td id="cos-value">1</td>
+          </tr>
+          <tr>
+            <th>
+              tan =
+              <div style="display: inline-block; text-align: center">
+                <span style="color: blue">AB</span><br />
+                <span
+                  style="border-top: 1px solid black; display: block"
+                ></span>
+                <span style="color: gold">OB</span>
+              </div>
+              :
+            </th>
+            <td id="tan-value">0</td>
+          </tr>
+        </table>
+      </div>
     </div>
-    
+
     <div id="graph-container">
-        <canvas id="graph-canvas" width="900" height="200"></canvas>
+      <canvas id="graph-canvas" width="900" height="200"></canvas>
     </div>
 
     <script>
-        // 获取画布和上下文
-        const canvas = document.getElementById('trig-canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // 获取函数图像画布和上下文
-        const graphCanvas = document.getElementById('graph-canvas');
-        const graphCtx = graphCanvas.getContext('2d');
-        
-        // 调整canvas元素实际尺寸以匹配其CSS尺寸
-        function resizeCanvas() {
-            // 调整图形画布尺寸
-            const graphContainerWidth = document.getElementById('graph-container').offsetWidth;
-            graphCanvas.width = graphContainerWidth;
-            graphCanvas.height = 200;
-        }
-        
-        // 立即调整并在窗口大小变化时重新调整
+      // 获取画布和上下文
+      const canvas = document.getElementById("trig-canvas");
+      const ctx = canvas.getContext("2d");
+
+      // 获取函数图像画布和上下文
+      const graphCanvas = document.getElementById("graph-canvas");
+      const graphCtx = graphCanvas.getContext("2d");
+
+      // 调整canvas元素实际尺寸以匹配其CSS尺寸
+      function resizeCanvas() {
+        // 调整图形画布尺寸
+        const graphContainerWidth =
+          document.getElementById("graph-container").offsetWidth;
+        graphCanvas.width = graphContainerWidth;
+        graphCanvas.height = 200;
+      }
+
+      // 立即调整并在窗口大小变化时重新调整
+      resizeCanvas();
+      window.addEventListener("resize", function () {
         resizeCanvas();
-        window.addEventListener('resize', function() {
-            resizeCanvas();
-            drawScene();
-            drawFunctionGraphs();
-        });
-        
-        // 设置画布和坐标系的参数
-        const width = canvas.width;
-        const height = canvas.height;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const scale = 100; // 坐标系的缩放比例
-        
-        // 角度和三角函数值
-        let angle = 0; // 初始角度为0
-        const radius = 2; // 固定半径OA
-        let isDragging = false;
-        
-        // 初始化函数
-        function init() {
-            // 初始绘制
-            drawScene();
-            drawFunctionGraphs();
-            
-            // 添加鼠标事件监听器
-            canvas.addEventListener('mousedown', handleMouseDown);
-            canvas.addEventListener('mousemove', handleMouseMove);
-            canvas.addEventListener('mouseup', () => isDragging = false);
-            canvas.addEventListener('mouseleave', () => isDragging = false);
-            
-            // 触摸事件支持
-            canvas.addEventListener('touchstart', handleTouchStart);
-            canvas.addEventListener('touchmove', handleTouchMove);
-            canvas.addEventListener('touchend', () => isDragging = false);
-        }
-        
-        // 绘制整个场景
-        function drawScene() {
-            // 清除画布
-            ctx.clearRect(0, 0, width, height);
-            
-            // 绘制坐标系
-            drawCoordinateSystem();
-            
-            // 计算点A的位置
-            const pointA = {
-                x: centerX + radius * scale * Math.cos(angle),
-                y: centerY - radius * scale * Math.sin(angle)
-            };
-            
-            // 计算点B的位置
-            const pointB = {
-                x: pointA.x,
-                y: centerY
-            };
-            
-            // 绘制OB线段（黄色）
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(pointB.x, pointB.y);
-            ctx.strokeStyle = "gold";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // 绘制OA线段（红色）
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(pointA.x, pointA.y);
-            ctx.strokeStyle = "red";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // 绘制AB线段（蓝色虚线）
-            ctx.beginPath();
-            ctx.moveTo(pointA.x, pointA.y);
-            ctx.lineTo(pointB.x, pointB.y);
-            ctx.strokeStyle = "blue";
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 3]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            // 绘制点O
-            drawPoint(centerX, centerY, "black", "O");
-            
-            // 绘制点A
-            drawPoint(pointA.x, pointA.y, "red", "A");
-            
-            // 绘制点B
-            drawPoint(pointB.x, pointB.y, "blue", "B");
-            
-            // 绘制角度弧
-            drawAngleArc();
-            
-            // 更新数值显示
-            updateValues();
-        }
-        
+        drawScene();
+        drawFunctionGraphs();
+      });
+
+      // 设置画布和坐标系的参数
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const scale = 100; // 坐标系的缩放比例
+
+      // 角度和三角函数值
+      let angle = 0; // 初始角度为0
+      const radius = 2; // 固定半径OA
+      let isDragging = false;
+
+      // 初始化函数
+      function init() {
+        // 初始绘制
+        drawScene();
+        drawFunctionGraphs();
+
+        // 添加鼠标事件监听器
+        canvas.addEventListener("mousedown", handleMouseDown);
+        canvas.addEventListener("mousemove", handleMouseMove);
+        canvas.addEventListener("mouseup", () => (isDragging = false));
+        canvas.addEventListener("mouseleave", () => (isDragging = false));
+
+        // 触摸事件支持
+        canvas.addEventListener("touchstart", handleTouchStart);
+        canvas.addEventListener("touchmove", handleTouchMove);
+        canvas.addEventListener("touchend", () => (isDragging = false));
+      }
+
+      // 绘制整个场景
+      function drawScene() {
+        // 清除画布
+        ctx.clearRect(0, 0, width, height);
+
         // 绘制坐标系
-        function drawCoordinateSystem() {
-            // 绘制淡色坐标格
-            ctx.strokeStyle = "#ddd";
-            ctx.lineWidth = 0.5;
-            
-            // 绘制水平和垂直网格线
-            for (let i = -10; i <= 10; i++) {
-                // 水平线
-                ctx.beginPath();
-                ctx.moveTo(0, centerY + i * scale);
-                ctx.lineTo(width, centerY + i * scale);
-                ctx.stroke();
-                
-                // 垂直线
-                ctx.beginPath();
-                ctx.moveTo(centerX + i * scale, 0);
-                ctx.lineTo(centerX + i * scale, height);
-                ctx.stroke();
-            }
-            
-            // 绘制x轴和y轴
-            ctx.strokeStyle = "#999";
-            ctx.lineWidth = 1;
-            
-            // x轴
-            ctx.beginPath();
-            ctx.moveTo(0, centerY);
-            ctx.lineTo(width, centerY);
-            ctx.stroke();
-            
-            // y轴
-            ctx.beginPath();
-            ctx.moveTo(centerX, 0);
-            ctx.lineTo(centerX, height);
-            ctx.stroke();
-            
-            // 绘制刻度和标签
-            ctx.fillStyle = "#666";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.font = "12px Arial";
-            
-            // x轴刻度
-            for (let i = -5; i <= 5; i++) {
-                if (i === 0) continue;
-                
-                const x = centerX + i * scale;
-                ctx.beginPath();
-                ctx.moveTo(x, centerY - 5);
-                ctx.lineTo(x, centerY + 5);
-                ctx.stroke();
-                
-                ctx.fillText(i.toString(), x, centerY + 15);
-            }
-            
-            // y轴刻度
-            for (let i = -5; i <= 5; i++) {
-                if (i === 0) continue;
-                
-                const y = centerY - i * scale;
-                ctx.beginPath();
-                ctx.moveTo(centerX - 5, y);
-                ctx.lineTo(centerX + 5, y);
-                ctx.stroke();
-                
-                ctx.fillText(i.toString(), centerX - 15, y);
-            }
-            
-            // 原点标记
-            ctx.fillText("0", centerX - 15, centerY + 15);
-        }
-        
-        // 绘制点
-        function drawPoint(x, y, color, label) {
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
-            
-            // 添加标签
-            ctx.fillStyle = "black";
-            ctx.font = "14px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            
-            // 根据点的位置调整标签位置
-            let labelX = x;
-            let labelY = y;
-            
-            if (label === "O") {
-                labelX -= 10;
-                labelY += 10;
-            } else if (label === "A") {
-                if (angle < Math.PI / 2) {
-                    labelX += 10;
-                    labelY -= 10;
-                } else if (angle < Math.PI) {
-                    labelX -= 10;
-                    labelY -= 10;
-                } else if (angle < 3 * Math.PI / 2) {
-                    labelX -= 10;
-                    labelY += 10;
-                } else {
-                    labelX += 10;
-                    labelY += 10;
-                }
-            } else if (label === "B") {
-                labelY += 15;
-            }
-            
-            ctx.fillText(label, labelX, labelY);
-        }
-        
+        drawCoordinateSystem();
+
+        // 计算点A的位置
+        const pointA = {
+          x: centerX + radius * scale * Math.cos(angle),
+          y: centerY - radius * scale * Math.sin(angle),
+        };
+
+        // 计算点B的位置
+        const pointB = {
+          x: pointA.x,
+          y: centerY,
+        };
+
+        // 绘制OB线段（黄色）
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(pointB.x, pointB.y);
+        ctx.strokeStyle = "gold";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 绘制OA线段（红色）
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(pointA.x, pointA.y);
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 绘制AB线段（蓝色虚线）
+        ctx.beginPath();
+        ctx.moveTo(pointA.x, pointA.y);
+        ctx.lineTo(pointB.x, pointB.y);
+        ctx.strokeStyle = "blue";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 绘制点O
+        drawPoint(centerX, centerY, "black", "O");
+
+        // 绘制点A
+        drawPoint(pointA.x, pointA.y, "red", "A");
+
+        // 绘制点B
+        drawPoint(pointB.x, pointB.y, "blue", "B");
+
         // 绘制角度弧
-        function drawAngleArc() {
-            const arcRadius = 30;
-            ctx.beginPath();
-            // 从X轴正方向逆时针绘制到当前角度
-            ctx.arc(centerX, centerY, arcRadius, 0, angle, false);
-            ctx.strokeStyle = "rgba(128, 0, 128, 0.6)";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // 在弧的中间绘制角度符号
-            const midAngle = angle / 2;
-            const labelX = centerX + (arcRadius + 10) * Math.cos(midAngle);
-            const labelY = centerY - (arcRadius + 10) * Math.sin(midAngle);
-            
-            ctx.fillStyle = "purple";
-            ctx.font = "14px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("θ", labelX, labelY);
-        }
-        
+        drawAngleArc();
+
         // 更新数值显示
-        function updateValues() {
-            // 计算三角函数值
-            const cosValue = Math.cos(angle);
-            const sinValue = Math.sin(angle);
-            const tanValue = sinValue / cosValue; // 使用比值计算tangent
-            
-            // 计算长度
-            const oaLength = radius;
-            const obLength = radius * cosValue;
-            const abLength = radius * sinValue;
-            
-            // 更新显示
-            document.getElementById('oa-value').textContent = oaLength.toFixed(2);
-            document.getElementById('ob-value').textContent = obLength.toFixed(2);
-            document.getElementById('ab-value').textContent = abLength.toFixed(2);
-            document.getElementById('angle-value').textContent = `${(angle * 180 / Math.PI).toFixed(1)}°`;
-            document.getElementById('sin-value').textContent = sinValue.toFixed(4);
-            document.getElementById('cos-value').textContent = cosValue.toFixed(4);
-            document.getElementById('tan-value').textContent = tanValue.toFixed(4);
+        updateValues();
+      }
+
+      // 绘制坐标系
+      function drawCoordinateSystem() {
+        // 绘制淡色坐标格
+        ctx.strokeStyle = "#ddd";
+        ctx.lineWidth = 0.5;
+
+        // 绘制水平和垂直网格线
+        for (let i = -10; i <= 10; i++) {
+          // 水平线
+          ctx.beginPath();
+          ctx.moveTo(0, centerY + i * scale);
+          ctx.lineTo(width, centerY + i * scale);
+          ctx.stroke();
+
+          // 垂直线
+          ctx.beginPath();
+          ctx.moveTo(centerX + i * scale, 0);
+          ctx.lineTo(centerX + i * scale, height);
+          ctx.stroke();
         }
-        
-        // 绘制函数图像
-        function drawFunctionGraphs() {
-            const graphWidth = graphCanvas.width;
-            const graphHeight = graphCanvas.height;
-            
-            // 清除画布
-            graphCtx.clearRect(0, 0, graphWidth, graphHeight);
-            
-            // 设置坐标系
-            const graphMargin = Math.max(40, graphWidth * 0.05);
-            const graphCenterY = graphHeight / 2;
-            const graphScaleY = graphHeight / 4; // 垂直缩放
-            
-            // 绘制x轴（水平中线）
-            graphCtx.beginPath();
-            graphCtx.moveTo(graphMargin, graphCenterY);
-            graphCtx.lineTo(graphWidth - graphMargin, graphCenterY);
-            graphCtx.strokeStyle = "#999";
-            graphCtx.lineWidth = 1;
-            graphCtx.stroke();
-            
-            // 绘制y轴
-            graphCtx.beginPath();
-            graphCtx.moveTo(graphMargin, 10);
-            graphCtx.lineTo(graphMargin, graphHeight - 10);
-            graphCtx.stroke();
-            
-            // 绘制水平辅助线
-            for (let i = -1; i <= 1; i += 0.5) {
-                if (i === 0) continue; // 跳过x轴
-                
-                const y = graphCenterY - i * graphScaleY;
-                
-                graphCtx.beginPath();
-                graphCtx.moveTo(graphMargin, y);
-                graphCtx.lineTo(graphWidth - graphMargin, y);
-                graphCtx.strokeStyle = "#ddd";
-                graphCtx.lineWidth = 0.5;
-                graphCtx.stroke();
-                
-                // 添加刻度标签
-                graphCtx.fillStyle = "#666";
-                graphCtx.font = "12px Arial";
-                graphCtx.textAlign = "right";
-                graphCtx.textBaseline = "middle";
-                graphCtx.fillText(i.toString(), graphMargin - 5, y);
+
+        // 绘制x轴和y轴
+        ctx.strokeStyle = "#999";
+        ctx.lineWidth = 1;
+
+        // x轴
+        ctx.beginPath();
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(width, centerY);
+        ctx.stroke();
+
+        // y轴
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, height);
+        ctx.stroke();
+
+        // 绘制刻度和标签
+        ctx.fillStyle = "#666";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "12px Arial";
+
+        // x轴刻度
+        for (let i = -5; i <= 5; i++) {
+          if (i === 0) continue;
+
+          const x = centerX + i * scale;
+          ctx.beginPath();
+          ctx.moveTo(x, centerY - 5);
+          ctx.lineTo(x, centerY + 5);
+          ctx.stroke();
+
+          ctx.fillText(i.toString(), x, centerY + 15);
+        }
+
+        // y轴刻度
+        for (let i = -5; i <= 5; i++) {
+          if (i === 0) continue;
+
+          const y = centerY - i * scale;
+          ctx.beginPath();
+          ctx.moveTo(centerX - 5, y);
+          ctx.lineTo(centerX + 5, y);
+          ctx.stroke();
+
+          ctx.fillText(i.toString(), centerX - 15, y);
+        }
+
+        // 原点标记
+        ctx.fillText("0", centerX - 15, centerY + 15);
+      }
+
+      // 绘制点
+      function drawPoint(x, y, color, label) {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // 添加标签
+        ctx.fillStyle = "black";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // 根据点的位置调整标签位置
+        let labelX = x;
+        let labelY = y;
+
+        if (label === "O") {
+          labelX -= 10;
+          labelY += 10;
+        } else if (label === "A") {
+          if (angle < Math.PI / 2) {
+            labelX += 10;
+            labelY -= 10;
+          } else if (angle < Math.PI) {
+            labelX -= 10;
+            labelY -= 10;
+          } else if (angle < (3 * Math.PI) / 2) {
+            labelX -= 10;
+            labelY += 10;
+          } else {
+            labelX += 10;
+            labelY += 10;
+          }
+        } else if (label === "B") {
+          labelY += 15;
+        }
+
+        ctx.fillText(label, labelX, labelY);
+      }
+
+      // 绘制角度弧
+      function drawAngleArc() {
+        const arcRadius = 30;
+        ctx.beginPath();
+        // 从X轴正方向逆时针绘制到当前角度
+        ctx.arc(centerX, centerY, arcRadius, 0, angle, false);
+        ctx.strokeStyle = "rgba(128, 0, 128, 0.6)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 在弧的中间绘制角度符号
+        const midAngle = angle / 2;
+        const labelX = centerX + (arcRadius + 10) * Math.cos(midAngle);
+        const labelY = centerY - (arcRadius + 10) * Math.sin(midAngle);
+
+        ctx.fillStyle = "purple";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("θ", labelX, labelY);
+      }
+
+      // 更新数值显示
+      function updateValues() {
+        // 计算三角函数值
+        const cosValue = Math.cos(angle);
+        const sinValue = Math.sin(angle);
+        let tanDisplay;
+        if (Math.abs(cosValue) < 0.0001) {
+          tanDisplay = "不存在";
+        } else {
+          tanDisplay = (sinValue / cosValue).toFixed(4);
+        }
+
+        // 更新显示文本
+        document.getElementById("tan-value").textContent = tanDisplay;
+
+        // 计算长度
+        const oaLength = radius;
+        const obLength = radius * cosValue;
+        const abLength = radius * sinValue;
+
+        // 更新显示
+        document.getElementById("oa-value").textContent = oaLength.toFixed(2);
+        document.getElementById("ob-value").textContent = obLength.toFixed(2);
+        document.getElementById("ab-value").textContent = abLength.toFixed(2);
+        document.getElementById("angle-value").textContent = `${(
+          (angle * 180) /
+          Math.PI
+        ).toFixed(1)}°`;
+        document.getElementById("sin-value").textContent = sinValue.toFixed(4);
+        document.getElementById("cos-value").textContent = cosValue.toFixed(4);
+        document.getElementById("tan-value").textContent = tanValue.toFixed(4);
+      }
+
+      // 绘制函数图像
+      function drawFunctionGraphs() {
+        const graphWidth = graphCanvas.width;
+        const graphHeight = graphCanvas.height;
+
+        // 清除画布
+        graphCtx.clearRect(0, 0, graphWidth, graphHeight);
+
+        // 设置坐标系
+        const graphMargin = Math.max(40, graphWidth * 0.05);
+        const graphCenterY = graphHeight / 2;
+        const graphScaleY = graphHeight / 4; // 垂直缩放
+
+        // 绘制x轴（水平中线）
+        graphCtx.beginPath();
+        graphCtx.moveTo(graphMargin, graphCenterY);
+        graphCtx.lineTo(graphWidth - graphMargin, graphCenterY);
+        graphCtx.strokeStyle = "#999";
+        graphCtx.lineWidth = 1;
+        graphCtx.stroke();
+
+        // 绘制y轴
+        graphCtx.beginPath();
+        graphCtx.moveTo(graphMargin, 10);
+        graphCtx.lineTo(graphMargin, graphHeight - 10);
+        graphCtx.stroke();
+
+        // 绘制水平辅助线
+        for (let i = -1; i <= 1; i += 0.5) {
+          if (i === 0) continue; // 跳过x轴
+
+          const y = graphCenterY - i * graphScaleY;
+
+          graphCtx.beginPath();
+          graphCtx.moveTo(graphMargin, y);
+          graphCtx.lineTo(graphWidth - graphMargin, y);
+          graphCtx.strokeStyle = "#ddd";
+          graphCtx.lineWidth = 0.5;
+          graphCtx.stroke();
+
+          // 添加刻度标签
+          graphCtx.fillStyle = "#666";
+          graphCtx.font = "12px Arial";
+          graphCtx.textAlign = "right";
+          graphCtx.textBaseline = "middle";
+          graphCtx.fillText(i.toString(), graphMargin - 5, y);
+        }
+
+        // 绘制π/2, π, 3π/2, 2π刻度线
+        const piPositions = [
+          { x: 0.25, label: "π/2" },
+          { x: 0.5, label: "π" },
+          { x: 0.75, label: "3π/2" },
+          { x: 1, label: "2π" },
+        ];
+
+        piPositions.forEach((pos) => {
+          const xPos = graphMargin + pos.x * (graphWidth - 2 * graphMargin);
+
+          // 刻度线
+          graphCtx.beginPath();
+          graphCtx.moveTo(xPos, graphCenterY - 5);
+          graphCtx.lineTo(xPos, graphCenterY + 5);
+          graphCtx.strokeStyle = "#999";
+          graphCtx.lineWidth = 1;
+          graphCtx.stroke();
+
+          // 刻度标签
+          graphCtx.fillStyle = "#666";
+          graphCtx.font = "12px Arial";
+          graphCtx.textAlign = "center";
+          graphCtx.textBaseline = "top";
+          graphCtx.fillText(pos.label, xPos, graphCenterY + 8);
+        });
+
+        // 添加0标签
+        graphCtx.textAlign = "center";
+        graphCtx.textBaseline = "top";
+        graphCtx.fillText("0", graphMargin, graphCenterY + 8);
+
+        // 添加y轴标签
+        graphCtx.save();
+        graphCtx.translate(graphMargin - 25, graphHeight / 2);
+        graphCtx.rotate(-Math.PI / 2);
+        graphCtx.textAlign = "center";
+        graphCtx.fillText("值", 0, 0);
+        graphCtx.restore();
+
+        // 绘制函数曲线
+        const drawCurve = (func, color) => {
+          graphCtx.beginPath();
+
+          for (let x = 0; x <= 2 * Math.PI; x += 0.01) {
+            const graphX =
+              graphMargin +
+              (x / (2 * Math.PI)) * (graphWidth - 2 * graphMargin);
+            const graphY = graphCenterY - func(x) * graphScaleY;
+
+            if (x === 0) {
+              graphCtx.moveTo(graphX, graphY);
+            } else {
+              graphCtx.lineTo(graphX, graphY);
             }
-            
-            // 绘制π/2, π, 3π/2, 2π刻度线
-            const piPositions = [
-                { x: 0.25, label: "π/2" },
-                { x: 0.5, label: "π" },
-                { x: 0.75, label: "3π/2" },
-                { x: 1, label: "2π" }
-            ];
-            
-            piPositions.forEach(pos => {
-                const xPos = graphMargin + pos.x * (graphWidth - 2 * graphMargin);
-                
-                // 刻度线
-                graphCtx.beginPath();
-                graphCtx.moveTo(xPos, graphCenterY - 5);
-                graphCtx.lineTo(xPos, graphCenterY + 5);
-                graphCtx.strokeStyle = "#999";
-                graphCtx.lineWidth = 1;
-                graphCtx.stroke();
-                
-                // 刻度标签
-                graphCtx.fillStyle = "#666";
-                graphCtx.font = "12px Arial";
-                graphCtx.textAlign = "center";
-                graphCtx.textBaseline = "top";
-                graphCtx.fillText(pos.label, xPos, graphCenterY + 8);
-            });
-            
-            // 添加0标签
-            graphCtx.textAlign = "center";
-            graphCtx.textBaseline = "top";
-            graphCtx.fillText("0", graphMargin, graphCenterY + 8);
-            
-            // 添加y轴标签
-            graphCtx.save();
-            graphCtx.translate(graphMargin - 25, graphHeight / 2);
-            graphCtx.rotate(-Math.PI / 2);
-            graphCtx.textAlign = "center";
-            graphCtx.fillText("值", 0, 0);
-            graphCtx.restore();
-            
-            // 绘制函数曲线
-            const drawCurve = (func, color) => {
-                graphCtx.beginPath();
-                
-                for (let x = 0; x <= 2 * Math.PI; x += 0.01) {
-                    const graphX = graphMargin + (x / (2 * Math.PI)) * (graphWidth - 2 * graphMargin);
-                    const graphY = graphCenterY - func(x) * graphScaleY;
-                    
-                    if (x === 0) {
-                        graphCtx.moveTo(graphX, graphY);
-                    } else {
-                        graphCtx.lineTo(graphX, graphY);
-                    }
-                }
-                
-                graphCtx.strokeStyle = color;
-                graphCtx.lineWidth = 2;
-                graphCtx.stroke();
-            };
-            
-            // 绘制sin曲线
-            drawCurve(Math.sin, "blue");
-            
-            // 绘制cos曲线
-            drawCurve(Math.cos, "gold");
-            
-            // 绘制tan曲线（限制在可见范围内）
-            graphCtx.beginPath();
-            let firstPoint = true;
-            for (let x = 0; x <= 2 * Math.PI; x += 0.01) {
-                if (Math.abs(x - Math.PI/2) < 0.1 || Math.abs(x - 3*Math.PI/2) < 0.1) continue; // 跳过接近π/2和3π/2的值
-                
-                const tanValue = Math.tan(x);
-                if (Math.abs(tanValue) > 3) continue; // 限制tan值的范围
-                
-                const graphX = graphMargin + (x / (2 * Math.PI)) * (graphWidth - 2 * graphMargin);
-                const graphY = graphCenterY - tanValue * graphScaleY;
-                
-                if (firstPoint) {
-                    graphCtx.moveTo(graphX, graphY);
-                    firstPoint = false;
-                } else {
-                    graphCtx.lineTo(graphX, graphY);
-                }
+          }
+
+          graphCtx.strokeStyle = color;
+          graphCtx.lineWidth = 2;
+          graphCtx.stroke();
+        };
+
+        // 绘制sin曲线
+        drawCurve(Math.sin, "blue");
+
+        // 绘制cos曲线
+        drawCurve(Math.cos, "gold");
+
+        // 绘制tan曲线，分段绘制避免在90°和270°附近相连
+        const tanSegments = [];
+        let currentSegment = [];
+        for (let x = 0; x <= 2 * Math.PI; x += 0.01) {
+          // 当接近 tan 的渐近线时结束当前段
+          if (
+            Math.abs(x - Math.PI / 2) < 0.03 ||
+            Math.abs(x - (3 * Math.PI) / 2) < 0.03
+          ) {
+            if (currentSegment.length > 0) {
+              tanSegments.push(currentSegment);
+              currentSegment = [];
             }
-            graphCtx.strokeStyle = "green";
-            graphCtx.lineWidth = 2;
-            graphCtx.stroke();
-            
-            // 添加图例
-            const legendItems = [
-                { label: "sin", color: "blue" },
-                { label: "cos", color: "gold" },
-                { label: "tan", color: "green" }
-            ];
-            
-            const legendX = graphWidth - 100;
-            let legendY = 20;
-            legendItems.forEach(item => {
-                // 绘制彩色线条
-                graphCtx.beginPath();
-                graphCtx.moveTo(legendX, legendY);
-                graphCtx.lineTo(legendX + 20, legendY);
-                graphCtx.strokeStyle = item.color;
-                graphCtx.lineWidth = 2;
-                graphCtx.stroke();
-                
-                // 绘制标签
-                graphCtx.fillStyle = "#333";
-                graphCtx.font = "14px Arial";
-                graphCtx.textAlign = "left";
-                graphCtx.textBaseline = "middle";
-                graphCtx.fillText(item.label, legendX + 25, legendY);
-                
-                legendY += 25;
-            });
-            
-            // 绘制当前角度的点
-            const currentX = graphMargin + (angle / (2 * Math.PI)) * (graphWidth - 2 * graphMargin);
-            
-            // sin点
-            const sinY = graphCenterY - Math.sin(angle) * graphScaleY;
-            graphCtx.beginPath();
-            graphCtx.arc(currentX, sinY, 5, 0, Math.PI * 2);
-            graphCtx.fillStyle = "blue";
-            graphCtx.fill();
-            graphCtx.strokeStyle = "white";
-            graphCtx.lineWidth = 1;
-            graphCtx.stroke();
-            
-            // cos点
-            const cosY = graphCenterY - Math.cos(angle) * graphScaleY;
-            graphCtx.beginPath();
-            graphCtx.arc(currentX, cosY, 5, 0, Math.PI * 2);
-            graphCtx.fillStyle = "gold";
-            graphCtx.fill();
-            graphCtx.strokeStyle = "white"; 
-            graphCtx.lineWidth = 1;
-            graphCtx.stroke();
-            
-            // tan点（如果在可见范围内）
-            if (Math.abs(Math.tan(angle)) <= 3) {
-                const tanY = graphCenterY - Math.tan(angle) * graphScaleY;
-                graphCtx.beginPath();
-                graphCtx.arc(currentX, tanY, 5, 0, Math.PI * 2);
-                graphCtx.fillStyle = "green";
-                graphCtx.fill();
-                graphCtx.strokeStyle = "white";
-                graphCtx.lineWidth = 1;
-                graphCtx.stroke();
+            continue;
+          }
+          const tanValue = Math.tan(x);
+          // 如果与前一个点差值过大，则认为跨越了渐近线，结束当前段
+          if (currentSegment.length > 0) {
+            const prevTan = currentSegment[currentSegment.length - 1].tan;
+            if (Math.abs(tanValue - prevTan) > 1) {
+              tanSegments.push(currentSegment);
+              currentSegment = [];
             }
+          }
+          currentSegment.push({ x: x, tan: tanValue });
         }
-        
-        // 处理鼠标按下事件
-        function handleMouseDown(e) {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            
-            // 检查鼠标是否在O点附近
-            const distToO = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
-            
-            // 如果鼠标在画布上，就开始拖动
-            isDragging = true;
-            
-            // 立即更新角度
-            updateAngle(mouseX, mouseY);
-        }
-        
-        // 处理鼠标移动事件
-        function handleMouseMove(e) {
-            if (!isDragging) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            
-            updateAngle(mouseX, mouseY);
-        }
-        
-        // 处理触摸开始事件
-        function handleTouchStart(e) {
-            e.preventDefault();
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
-                const rect = canvas.getBoundingClientRect();
-                const touchX = touch.clientX - rect.left;
-                const touchY = touch.clientY - rect.top;
-                
-                isDragging = true;
-                updateAngle(touchX, touchY);
+        if (currentSegment.length > 0) tanSegments.push(currentSegment);
+
+        // 绘制所有 tan 曲线分段
+        graphCtx.strokeStyle = "green";
+        graphCtx.lineWidth = 2;
+        tanSegments.forEach((segment) => {
+          graphCtx.beginPath();
+          segment.forEach((point, index) => {
+            const graphX =
+              graphMargin +
+              (point.x / (2 * Math.PI)) * (graphWidth - 2 * graphMargin);
+            const graphY = graphCenterY - point.tan * graphScaleY;
+            if (index === 0) {
+              graphCtx.moveTo(graphX, graphY);
+            } else {
+              graphCtx.lineTo(graphX, graphY);
             }
+          });
+          graphCtx.stroke();
+        });
+
+        // 添加图例
+        const legendItems = [
+          { label: "sin", color: "blue" },
+          { label: "cos", color: "gold" },
+          { label: "tan", color: "green" },
+        ];
+
+        const legendX = graphWidth - 100;
+        let legendY = 20;
+        legendItems.forEach((item) => {
+          // 绘制彩色线条
+          graphCtx.beginPath();
+          graphCtx.moveTo(legendX, legendY);
+          graphCtx.lineTo(legendX + 20, legendY);
+          graphCtx.strokeStyle = item.color;
+          graphCtx.lineWidth = 2;
+          graphCtx.stroke();
+
+          // 绘制标签
+          graphCtx.fillStyle = "#333";
+          graphCtx.font = "14px Arial";
+          graphCtx.textAlign = "left";
+          graphCtx.textBaseline = "middle";
+          graphCtx.fillText(item.label, legendX + 25, legendY);
+
+          legendY += 25;
+        });
+
+        // 绘制当前角度的点
+        const currentX =
+          graphMargin +
+          (angle / (2 * Math.PI)) * (graphWidth - 2 * graphMargin);
+
+        // sin点
+        const sinY = graphCenterY - Math.sin(angle) * graphScaleY;
+        graphCtx.beginPath();
+        graphCtx.arc(currentX, sinY, 5, 0, Math.PI * 2);
+        graphCtx.fillStyle = "blue";
+        graphCtx.fill();
+        graphCtx.strokeStyle = "white";
+        graphCtx.lineWidth = 1;
+        graphCtx.stroke();
+
+        // cos点
+        const cosY = graphCenterY - Math.cos(angle) * graphScaleY;
+        graphCtx.beginPath();
+        graphCtx.arc(currentX, cosY, 5, 0, Math.PI * 2);
+        graphCtx.fillStyle = "gold";
+        graphCtx.fill();
+        graphCtx.strokeStyle = "white";
+        graphCtx.lineWidth = 1;
+        graphCtx.stroke();
+
+        // tan点（如果在可见范围内）
+        if (Math.abs(Math.tan(angle)) <= 3) {
+          const tanY = graphCenterY - Math.tan(angle) * graphScaleY;
+          graphCtx.beginPath();
+          graphCtx.arc(currentX, tanY, 5, 0, Math.PI * 2);
+          graphCtx.fillStyle = "green";
+          graphCtx.fill();
+          graphCtx.strokeStyle = "white";
+          graphCtx.lineWidth = 1;
+          graphCtx.stroke();
         }
-        
-        // 处理触摸移动事件
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if (!isDragging || e.touches.length !== 1) return;
-            
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const touchX = touch.clientX - rect.left;
-            const touchY = touch.clientY - rect.top;
-            
-            updateAngle(touchX, touchY);
+      }
+
+      // 处理鼠标按下事件
+      function handleMouseDown(e) {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // 检查鼠标是否在O点附近
+        const distToO = Math.sqrt(
+          Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2)
+        );
+
+        // 如果鼠标在画布上，就开始拖动
+        isDragging = true;
+
+        // 立即更新角度
+        updateAngle(mouseX, mouseY);
+      }
+
+      // 处理鼠标移动事件
+      function handleMouseMove(e) {
+        if (!isDragging) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        updateAngle(mouseX, mouseY);
+      }
+
+      // 处理触摸开始事件
+      function handleTouchStart(e) {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          const rect = canvas.getBoundingClientRect();
+          const touchX = touch.clientX - rect.left;
+          const touchY = touch.clientY - rect.top;
+
+          isDragging = true;
+          updateAngle(touchX, touchY);
         }
-        
-        // 更新角度
-        function updateAngle(x, y) {
-            // 计算相对于原点的位置
-            const relX = x - centerX;
-            const relY = centerY - y; // 注意y坐标反转
-            
-            // 计算新角度
-            let newAngle = Math.atan2(relY, relX);
-            
-            // 确保角度为正值（0到2π）
-            if (newAngle < 0) {
-                newAngle += 2 * Math.PI;
-            }
-            
-            angle = newAngle;
-            
-            // 重新绘制场景
-            drawScene();
-            drawFunctionGraphs();
+      }
+
+      // 处理触摸移动事件
+      function handleTouchMove(e) {
+        e.preventDefault();
+        if (!isDragging || e.touches.length !== 1) return;
+
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const touchX = touch.clientX - rect.left;
+        const touchY = touch.clientY - rect.top;
+
+        updateAngle(touchX, touchY);
+      }
+
+      // 更新角度
+      function updateAngle(x, y) {
+        // 计算相对于原点的位置
+        const relX = x - centerX;
+        const relY = centerY - y; // 注意y坐标反转
+
+        // 计算新角度
+        let newAngle = Math.atan2(relY, relX);
+
+        // 确保角度为正值（0到2π）
+        if (newAngle < 0) {
+          newAngle += 2 * Math.PI;
         }
-        
-        // 启动应用
-        init();
+
+        angle = newAngle;
+
+        // 重新绘制场景
+        drawScene();
+        drawFunctionGraphs();
+      }
+
+      // 启动应用
+      init();
     </script>
-</body>
+  </body>
 </html>

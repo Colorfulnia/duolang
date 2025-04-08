@@ -355,15 +355,15 @@
             const arcRadius = 30;
             ctx.beginPath();
             // 从X轴正方向逆时针绘制到当前角度
-            ctx.arc(centerX, centerY, arcRadius, 0, angle, true);
+            ctx.arc(centerX, centerY, arcRadius, 0, angle, false);
             ctx.strokeStyle = "rgba(128, 0, 128, 0.6)";
             ctx.lineWidth = 2;
             ctx.stroke();
             
             // 在弧的中间绘制角度符号
             const midAngle = angle / 2;
-            const labelX = centerX - (arcRadius + 10) * Math.cos(midAngle);
-            const labelY = centerY + (arcRadius + 10) * Math.sin(midAngle);
+            const labelX = centerX + (arcRadius + 10) * Math.cos(midAngle);
+            const labelY = centerY - (arcRadius + 10) * Math.sin(midAngle);
             
             ctx.fillStyle = "purple";
             ctx.font = "14px Arial";

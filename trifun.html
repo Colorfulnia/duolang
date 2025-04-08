@@ -383,7 +383,7 @@
         // 在弧的中间绘制角度符号
         const midAngle = angle / 2;
         const labelX = centerX + (arcRadius + 10) * Math.cos(midAngle);
-        const labelY = centerY - (arcRadius + 10) * Math.sin(midAngle);
+        const labelY = (arcRadius + 10) * Math.sin(midAngle) - centerY;
 
         ctx.fillStyle = "purple";
         ctx.font = "14px Arial";

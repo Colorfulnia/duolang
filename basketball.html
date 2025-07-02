@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>篮球抛物运动能量转换演示</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        #canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto 20px;
+            cursor: grab;
+            background: linear-gradient(to bottom, #E6F3FF 0%, #F0F8FF 70%, #E8F5E8 100%);
+        }
+        
+        #canvas:active {
+            cursor: grabbing;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 10px;
+        }
+        
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .energy-display {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            gap: 20px;
+        }
+        
+        .energy-item {
+            flex: 1;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .energy-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .kinetic {
+            color: #FF6B6B;
+        }
+        
+        .potential {
+            color: #4ECDC4;
+        }
+        
+        .energy-bar-container {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .energy-bar {
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 15px;
+        }
+        
+        .kinetic-bar {
+            background: linear-gradient(to right, #FF6B6B, #FF8787);
+        }
+        
+        .potential-bar {
+            background: linear-gradient(to right, #4ECDC4, #5EE3DB);
+        }
+        
+        .energy-value {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .info {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏀 篮球抛物运动能量转换演示</h1>
+        
+        <canvas id="canvas" width="800" height="400"></canvas>
+        
+        <div class="controls">
+            <button id="playBtn">▶️ 播放</button>
+            <button id="resetBtn">🔄 重置</button>
+        </div>
+        
+        <div class="energy-display">
+            <div class="energy-item">
+                <div class="energy-label kinetic">动能 (KE)</div>
+                <div class="energy-bar-container">
+                    <div class="energy-bar kinetic-bar" id="kineticBar"></div>
+                </div>
+                <div class="energy-value" id="kineticValue">0 J</div>
+            </div>
+            
+            <div class="energy-item">
+                <div class="energy-label potential">重力势能 (PE)</div>
+                <div class="energy-bar-container">
+                    <div class="energy-bar potential-bar" id="potentialBar"></div>
+                </div>
+                <div class="energy-value" id="potentialValue">0 J</div>
+            </div>
+        </div>
+        
+        <div class="info">
+            💡 提示：点击播放观看动画，或者用鼠标拖动篮球查看不同位置的能量分布
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const playBtn = document.getElementById('playBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const kineticBar = document.getElementById('kineticBar');
+        const potentialBar = document.getElementById('potentialBar');
+        const kineticValue = document.getElementById('kineticValue');
+        const potentialValue = document.getElementById('potentialValue');
+
+        // 物理参数
+        const g = 9.8; // 重力加速度
+        const mass = 0.624; // 篮球质量 (kg)
+        const v0 = 15; // 初始速度 (m/s)
+        const angle = 60 * Math.PI / 180; // 抛射角度
+        const v0x = v0 * Math.cos(angle); // 水平初速度
+        const v0y = v0 * Math.sin(angle); // 垂直初速度
+        
+        // 画布参数
+        const groundY = canvas.height - 50;
+        const scale = 15; // 像素/米
+        
+        // 动画参数
+        let isPlaying = false;
+        let isDragging = false;
+        let t = 0; // 时间
+        let dt = 0.02; // 时间步长
+        
+        // 篮球位置
+        let ballX = 50;
+        let ballY = groundY;
+        const ballRadius = 15;
+        
+        // 轨迹点
+        const trajectoryPoints = [];
+        const totalTime = 2 * v0y / g; // 总飞行时间
+        
+        // 计算轨迹点
+        for (let time = 0; time <= totalTime; time += 0.02) {
+            const x = 50 + v0x * time * scale;
+            const y = groundY - (v0y * time - 0.5 * g * time * time) * scale;
+            trajectoryPoints.push({x, y, t: time});
+        }
+        
+        // 计算最大高度用于能量归一化
+        const maxHeight = (v0y * v0y) / (2 * g);
+        const totalEnergy = 0.5 * mass * v0 * v0; // 总机械能
+        
+        function drawGround() {
+            ctx.fillStyle = '#8FBC8F';
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+            
+            // 草地纹理
+            ctx.strokeStyle = '#6B8E23';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, groundY);
+                ctx.lineTo(x - 5, groundY + 10);
+                ctx.stroke();
+            }
+        }
+        
+        function drawTrajectory() {
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            
+            for (let i = 0; i < trajectoryPoints.length; i++) {
+                const point = trajectoryPoints[i];
+                if (i === 0) {
+                    ctx.moveTo(point.x, point.y);
+                } else {
+                    ctx.lineTo(point.x, point.y);
+                }
+            }
+            
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        function drawBasketball(x, y) {
+            // 篮球主体
+            ctx.fillStyle = '#FF6600';
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 篮球纹路
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // 垂直线
+            ctx.beginPath();
+            ctx.moveTo(x, y - ballRadius);
+            ctx.lineTo(x, y + ballRadius);
+            ctx.stroke();
+            
+            // 水平线
+            ctx.beginPath();
+            ctx.moveTo(x - ballRadius, y);
+            ctx.lineTo(x + ballRadius, y);
+            ctx.stroke();
+            
+            // 弧线
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius * 0.6, -Math.PI * 0.3, Math.PI * 0.3);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius * 0.6, Math.PI * 0.7, Math.PI * 1.3);
+            ctx.stroke();
+        }
+        
+        function updateEnergy(time) {
+            // 计算当前高度和速度
+            const height = v0y * time - 0.5 * g * time * time;
+            const vy = v0y - g * time;
+            const v = Math.sqrt(v0x * v0x + vy * vy);
+            
+            // 计算能量
+            const ke = 0.5 * mass * v * v;
+            const pe = mass * g * height;
+            
+            // 更新能量条（百分比）
+            const kePercent = (ke / totalEnergy) * 100;
+            const pePercent = (pe / totalEnergy) * 100;
+            
+            kineticBar.style.width = kePercent + '%';
+            potentialBar.style.width = pePercent + '%';
+            
+            // 更新数值显示
+            kineticValue.textContent = ke.toFixed(1) + ' J';
+            potentialValue.textContent = pe.toFixed(1) + ' J';
+        }
+        
+        function findNearestPoint(mouseX, mouseY) {
+            let minDist = Infinity;
+            let nearestPoint = null;
+            
+            for (const point of trajectoryPoints) {
+                const dist = Math.sqrt(
+                    Math.pow(point.x - mouseX, 2) + 
+                    Math.pow(point.y - mouseY, 2)
+                );
+                
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearestPoint = point;
+                }
+            }
+            
+            return nearestPoint;
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawGround();
+            drawTrajectory();
+            
+            if (isPlaying && t <= totalTime) {
+                ballX = 50 + v0x * t * scale;
+                ballY = groundY - (v0y * t - 0.5 * g * t * t) * scale;
+                t += dt;
+                
+                updateEnergy(t);
+            } else if (t > totalTime) {
+                isPlaying = false;
+                playBtn.textContent = '▶️ 播放';
+            }
+            
+            drawBasketball(ballX, ballY);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 事件监听器
+        playBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playBtn.textContent = '⏸️ 暂停';
+                if (t >= totalTime) {
+                    reset();
+                }
+            } else {
+                playBtn.textContent = '▶️ 播放';
+            }
+        });
+        
+        resetBtn.addEventListener('click', reset);
+        
+        function reset() {
+            isPlaying = false;
+            t = 0;
+            ballX = 50;
+            ballY = groundY;
+            playBtn.textContent = '▶️ 播放';
+            updateEnergy(0);
+        }
+        
+        // 鼠标拖动功能
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const dist = Math.sqrt(
+                Math.pow(ballX - mouseX, 2) + 
+                Math.pow(ballY - mouseY, 2)
+            );
+            
+            if (dist <= ballRadius * 2) {
+                isDragging = true;
+                isPlaying = false;
+                playBtn.textContent = '▶️ 播放';
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const nearestPoint = findNearestPoint(mouseX, mouseY);
+                if (nearestPoint) {
+                    ballX = nearestPoint.x;
+                    ballY = nearestPoint.y;
+                    t = nearestPoint.t;
+                    updateEnergy(t);
+                }
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+        
+        // 初始化
+        updateEnergy(0);
+        animate();
+    </script>
+</body>
+</html>

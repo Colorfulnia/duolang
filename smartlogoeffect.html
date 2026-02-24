@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SVG Logo 运动 + 急刹 + 右端驱动/制动</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden; /* 只裁剪屏幕外的内容 */
+      display: grid;
+      place-items: center;
+    }
+
+    .carrier {
+      will-change: transform;
+      transform: translateX(0px);
+    }
+
+    svg#logoSvg {
+      width: min(70vw, 520px);
+      height: auto;
+      display: block;
+
+      /* ✅ 关键：避免模块被 root svg 的“画幅”裁剪 */
+      overflow: visible;
+    }
+
+    .hint {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      font-size: 13px;
+      color: #777;
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage" id="stage">
+    <div class="carrier" id="carrier">
+      <!-- ✅ overflow="visible" 再补一层（有些环境里比只写 CSS 更稳） -->
+      <svg id="logoSvg" overflow="visible" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 432 215" width="432" height="215" aria-label="logo">
+        <g id="motionRoot">
+          <g id="parts" fill="#000" stroke="none">
+            <path d="m 268 34 l 82 142 64 1 -82 -143 z"/>
+            <path d="m 28 34 l 81 142 65 0 -83 -142 z"/>
+            <path d="m 208 34 l 0 36 61 106 65 0 -80 -139 z"/>
+            <path d="m 107 34 l 17 30 36 0 30 52 0 -82 z"/>
+            <path d="m 11 98 l 0 78 81 0 -15 -26 -35 0 z"/>
+            <path d="m 207 99 l 0 77 45 0 z"/>
+            <path d="m 11 190 l 0 16 4 1 95 -1 -10 -16 z"/>
+            <path d="m 190 21 l 0 -13 -99 0 8 13 z"/>
+            <path d="m 278 190 l 10 17 63 0 -9 -17 z"/>
+            <path d="m 358 190 l 9 16 64 0 -9 -16 z"/>
+            <path d="m 207 190 l 1 17 61 0 -9 -17 z"/>
+            <path d="m 117 190 l 9 15 64 0 -8 -15 z"/>
+            <path d="m 11 6 l 9 15 64 0 -9 -15 z"/>
+            <path d="m 252 7 l 8 14 64 0 -8 -14 z"/>
+            <path d="m 207 8 l 1 13 36 0 -8 -14 -28 0 z"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hint">点击任意位置重播</div>
+  </div>
+
+  <script>
+    (() => {
+      const stage = document.getElementById('stage');
+      const carrier = document.getElementById('carrier');
+      const svg = document.getElementById('logoSvg');
+      const partsGroup = document.getElementById('parts');
+      const paths = Array.from(partsGroup.querySelectorAll('path'));
+
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) return;
+
+      // ---------- 可调参数 ----------
+      const CONFIG = {
+        tAccel: 1.15,
+        brakeRatio: 6.5,
+        tSettle: 1.20,
+
+        // 拉开最大间隙（viewBox 单位）
+        maxGap: 78,
+
+        // 刹车压缩增强
+        compressBoost: 1.35,
+
+        // “右端驱动/制动”形变分布：尾部权重曲线（越大=变化更集中在尾部）
+        tailGamma: 0.88,
+
+        // 二阶响应（整体 strain）
+        strainOmega: 16.0,
+        strainZeta: 0.30,
+
+        // 模块二阶响应（各自跟随）
+        partOmegaBase: 22.0,
+        partZetaBase: 0.55,
+
+        // 碰撞参数
+        collisionMinDistFactor: 0.58,
+        restitution: 0.72,
+        collisionIters: 3,
+
+        // 刹车抖动点缀
+        joltDy: 6.5,
+        joltRotDeg: 7.0,
+
+        // ✅ 右端制动“锁定”强度：刹车时越接近右端越不动（0~1）
+        brakeLock: 0.92,
+
+        // ✅ 右端制动速度阻尼：刹车时右端更快“停住”
+        brakeVelDamp: 0.75
+      };
+
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+      function stepSecondOrder(state, target, dt, omega, zeta) {
+        const x = state.x;
+        const v = state.v;
+        const a = (omega * omega) * (target - x) - (2 * zeta * omega) * v;
+        state.v = v + a * dt;
+        state.x = x + state.v * dt;
+      }
+
+      function getViewBoxCenter() {
+        const vb = svg.viewBox.baseVal;
+        return {
+          cx: vb.x + vb.width / 2,
+          cy: vb.y + vb.height / 2,
+          w: vb.width,
+          h: vb.height
+        };
+      }
+
+      // 预计算模块信息（bbox / 中心 / 排序 / 右端锚点权重）
+      function buildPartsMeta() {
+        const { cx: vcx, cy: vcy, w: vw, h: vh } = getViewBoxCenter();
+
+        const metas = paths.map((el, idx) => {
+          const bb = el.getBBox();
+          const pcx = bb.x + bb.width / 2;
+          const pcy = bb.y + bb.height / 2;
+
+          const ny = (pcy - vcy) / (vh / 2);
+
+          const rnd1 = (Math.random() * 2 - 1);
+          const rnd2 = (Math.random() * 2 - 1);
+
+          const mass = Math.max(1, bb.width * bb.height);
+
+          const partOmega = CONFIG.partOmegaBase * (0.90 + 0.25 * Math.abs(rnd1));
+          const partZeta  = CONFIG.partZetaBase  * (0.90 + 0.20 * Math.abs(rnd2));
+
+          return {
+            el, idx, bb,
+            pcx, pcy,
+            ny,
+            rnd1, rnd2,
+            mass,
+            partOmega,
+            partZeta,
+            ox: { x: 0, v: 0 },
+
+            // 后面填：u / tail
+            u: 0,
+            tail: 0
+          };
+        });
+
+        const minX = Math.min(...metas.map(m => m.pcx));
+        const maxX = Math.max(...metas.map(m => m.pcx));
+        const rangeX = Math.max(1e-6, maxX - minX);
+
+        for (const m of metas) {
+          // u: 0=最左，1=最右
+          m.u = (m.pcx - minX) / rangeX;
+          // tail: 1=尾部(左)，0=头部(右)
+          m.tail = 1 - m.u;
+        }
+
+        const order = metas.slice().sort((a, b) => a.pcx - b.pcx);
+
+        for (let i = 0; i < order.length - 1; i++) {
+          const a = order[i];
+          const b = order[i + 1];
+          a.next = b;
+          a.d0ToNext = (b.pcx - a.pcx);
+        }
+        order[order.length - 1].next = null;
+        order[order.length - 1].d0ToNext = 0;
+
+        return { metas, order, minX, maxX, rangeX };
+      }
+
+      function makeKinematics(distancePx) {
+        const t1 = CONFIG.tAccel;
+        const r = CONFIG.brakeRatio;
+        const t2 = t1 / r;
+        const tMove = t1 + t2;
+
+        const a1 = (2 * distancePx) / (t1 * t1 * (1 + 1 / r));
+        const a2 = -r * a1;
+        const v1 = a1 * t1;
+        const x1 = 0.5 * a1 * t1 * t1;
+
+        function sample(t) {
+          if (t <= 0) return { x: 0, v: 0, a: a1 };
+          if (t < t1) {
+            return { x: 0.5 * a1 * t * t, v: a1 * t, a: a1 };
+          }
+          if (t < tMove) {
+            const tb = t - t1;
+            return { x: x1 + v1 * tb + 0.5 * a2 * tb * tb, v: v1 + a2 * tb, a: a2 };
+          }
+          return { x: distancePx, v: 0, a: 0 };
+        }
+
+        return { tMove, t1, t2, a1, a2, v1, sample };
+      }
+
+      let anim = null;
+
+      function play() {
+        if (anim && anim.rafId) cancelAnimationFrame(anim.rafId);
+
+        for (const p of paths) p.removeAttribute('transform');
+
+        const stageRect = stage.getBoundingClientRect();
+        const svgRect = svg.getBoundingClientRect();
+        const margin = 40;
+
+        // ✅ overflow visible 后，真实形变宽度会大于 svgRect，起点额外往左推，避免“刚开始就露馅”
+        const vbWidth = svg.viewBox.baseVal.width || 432;
+        const scaleX = (svgRect.width / vbWidth);
+        const maxOverhangLeftPx = CONFIG.maxGap * 1.6 * scaleX; // 经验安全系数
+
+        const startX = -((stageRect.width + svgRect.width) / 2 + margin + maxOverhangLeftPx);
+        const distance = -startX;
+
+        const kine = makeKinematics(distance);
+        const { metas, order } = buildPartsMeta();
+
+        const strain = { x: 0, v: 0 };
+
+        function computeBrakeAmount(a) {
+          const aMax = Math.max(Math.abs(kine.a1), Math.abs(kine.a2));
+          return clamp((-a) / aMax, 0, 1); // 只有减速时>0
+        }
+
+        // 右端制动锁定：把“接近右端”的逆质量压到接近 0（刹车时更像“右端先停住”）
+        function effInvMass(m, brakeAmt) {
+          const inv = 1 / m.mass;
+          const lock = brakeAmt * CONFIG.brakeLock * Math.pow(m.u, 4); // u 越接近 1（右端）锁得越死
+          return inv * (1 - lock);
+        }
+
+        const tTotal = kine.tMove + CONFIG.tSettle;
+
+        anim = {
+          rafId: 0,
+          t0: performance.now(),
+          last: performance.now(),
+          startX,
+          kine,
+          metas,
+          order,
+          strain
+        };
+
+        function frame(now) {
+          const dt = clamp((now - anim.last) / 1000, 0, 0.033);
+          anim.last = now;
+
+          const t = (now - anim.t0) / 1000;
+
+          // 1) 整体位移（px）
+          const s = anim.kine.sample(t);
+          const xPx = anim.startX + s.x;
+          carrier.style.transform = `translateX(${xPx}px)`;
+
+          // 2) strain 目标：速度拉开 + 减速度压缩
+          const vNorm = (anim.kine.v1 > 1e-6) ? (s.v / anim.kine.v1) : 0;
+          const aMax = Math.max(Math.abs(anim.kine.a1), Math.abs(anim.kine.a2));
+          const aNorm = (aMax > 1e-6) ? (s.a / aMax) : 0;
+
+          const kV = 0.85;
+          const kA = 1.60;
+
+          let targetStrain = kV * vNorm + kA * aNorm;
+          targetStrain = clamp(targetStrain, -1.2, 1.2);
+
+          stepSecondOrder(anim.strain, targetStrain, dt, CONFIG.strainOmega, CONFIG.strainZeta);
+
+          const brakeAmt = computeBrakeAmount(s.a);
+          const strainNow = anim.strain.x;
+          const gap = CONFIG.maxGap;
+
+          // 3) 模块目标偏移（以“最右端”为锚点）
+          for (const m of anim.metas) {
+            const tailPow = Math.pow(m.tail, CONFIG.tailGamma);
+
+            // ✅ 右端锚点：右端 tail≈0 => desired≈0
+            // 加速 strain>0 => 尾部 desired<0（向左拉开）
+            // 刹车 strain<0 => 尾部 desired>0（向右压缩追尾）
+            let desired = -tailPow * strainNow * gap;
+
+            // 刹车压缩增强
+            if (strainNow < 0) desired *= CONFIG.compressBoost;
+
+            stepSecondOrder(m.ox, desired, dt, m.partOmega, m.partZeta);
+
+            //  刹车时，越靠右端速度越被额外阻尼（更像“制动从右端来”）
+            if (brakeAmt > 0) {
+              const damp = brakeAmt * CONFIG.brakeVelDamp * Math.pow(m.u, 2); // 右端(u≈1)更强
+              m.ox.v *= (1 - clamp(damp, 0, 0.95));
+            }
+          }
+
+          // 4) 碰撞（相邻链），位置修正改成“逆质量加权 + 右端刹车锁定”
+          for (let iter = 0; iter < CONFIG.collisionIters; iter++) {
+            for (let i = 0; i < anim.order.length - 1; i++) {
+              const a = anim.order[i];
+              const b = anim.order[i + 1];
+
+              const d0 = a.d0ToNext;
+              if (d0 <= 0) continue;
+
+              const minDist = Math.max(6, d0 * CONFIG.collisionMinDistFactor);
+
+              const pa = a.pcx + a.ox.x;
+              const pb = b.pcx + b.ox.x;
+              const dist = pb - pa;
+
+              if (dist < minDist) {
+                const overlap = (minDist - dist);
+
+                const invA = effInvMass(a, brakeAmt);
+                const invB = effInvMass(b, brakeAmt);
+                const sumInv = invA + invB;
+                if (sumInv < 1e-9) continue;
+
+                // 位置分离：右端更“锁”，所以更少被推走
+                a.ox.x -= overlap * (invA / sumInv);
+                b.ox.x += overlap * (invB / sumInv);
+
+                // 速度更新：用有效逆质量做冲量（更稳定，也更符合“右端刹车”）
+                const ua = a.ox.v;
+                const ub = b.ox.v;
+                const rel = ub - ua;
+
+                if (rel < 0) {
+                  const e = CONFIG.restitution;
+                  const j = (-(1 + e) * rel) / sumInv;
+                  a.ox.v -= j * invA;
+                  b.ox.v += j * invB;
+                }
+              }
+            }
+          }
+
+          // 5) 写回 transform
+          const jolt = brakeAmt;
+          for (const m of anim.metas) {
+            const dx = m.ox.x;
+
+            // 刹车时尾部更“乱”，头部更“稳”
+            const tailAmp = 0.35 + 0.65 * m.tail;
+
+            const dy = (m.rnd1 * CONFIG.joltDy) * jolt * tailAmp + (m.ny * dx * 0.06);
+            const rot = (m.rnd2 * CONFIG.joltRotDeg) * jolt * tailAmp;
+
+            m.el.setAttribute(
+              'transform',
+              `translate(${dx.toFixed(3)} ${dy.toFixed(3)}) rotate(${rot.toFixed(3)} ${m.pcx.toFixed(3)} ${m.pcy.toFixed(3)})`
+            );
+          }
+
+          // 6) 结束归位
+          if (t < tTotal) {
+            anim.rafId = requestAnimationFrame(frame);
+          } else {
+            carrier.style.transform = `translateX(0px)`;
+            for (const p of paths) p.removeAttribute('transform');
+          }
+        }
+
+        anim.rafId = requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(() => play());
+      stage.addEventListener('click', () => play());
+      window.addEventListener('resize', () => play());
+    })();
+  </script>
+</body>
+</html>
